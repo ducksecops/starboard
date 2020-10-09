@@ -3,6 +3,7 @@ package kubehunter
 import (
 	"context"
 	"fmt"
+	starboard2 "github.com/aquasecurity/starboard/pkg/starboard"
 
 	"github.com/aquasecurity/starboard/pkg/scanners"
 
@@ -95,7 +96,7 @@ func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      uuid.New().String(),
-			Namespace: kube.NamespaceStarboard,
+			Namespace: starboard2.NamespaceName,
 			Labels: map[string]string{
 				"app": "kube-hunter",
 			},
@@ -111,7 +112,7 @@ func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 					},
 				},
 				Spec: core.PodSpec{
-					ServiceAccountName: kube.ServiceAccountStarboard,
+					ServiceAccountName: starboard2.ServiceAccountName,
 					RestartPolicy:      core.RestartPolicyNever,
 					HostPID:            true,
 					Containers: []core.Container{

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	starboard2 "github.com/aquasecurity/starboard/pkg/starboard"
 	"sync"
 
 	core "k8s.io/api/core/v1"
@@ -23,11 +24,11 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 		Short: "Run the CIS Kubernetes Benchmark https://www.cisecurity.org/benchmark/kubernetes",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ctx := context.Background()
-			config, err := cf.ToRESTConfig()
+			kubernetesConfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return
 			}
-			kubernetesClientset, err := kubernetes.NewForConfig(config)
+			kubernetesClientset, err := kubernetes.NewForConfig(kubernetesConfig)
 			if err != nil {
 				return
 			}
@@ -35,7 +36,7 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			starboardClientset, err := starboard.NewForConfig(config)
+			starboardClientset, err := starboard.NewForConfig(kubernetesConfig)
 			if err != nil {
 				return
 			}
@@ -44,7 +45,12 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 				err = fmt.Errorf("listing nodes: %w", err)
 				return
 			}
-			scanner := kubebench.NewScanner(opts, kubernetesClientset)
+			config, err := starboard2.NewConfigReader(kubernetesClientset).Read(ctx)
+			if err != nil {
+				return err
+			}
+
+			scanner := kubebench.NewScanner(config, opts, kubernetesClientset)
 			writer := crd.NewReadWriter(GetScheme(), starboardClientset)
 
 			var wg sync.WaitGroup

@@ -3,6 +3,7 @@ package kubebench
 import (
 	"context"
 	"fmt"
+	starboard2 "github.com/aquasecurity/starboard/pkg/starboard"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -26,24 +27,25 @@ import (
 )
 
 const (
-	kubeBenchVersion       = "0.3.1"
 	kubeBenchContainerName = "kube-bench"
 	masterNodeLabel        = "node-role.kubernetes.io/master"
 )
 
-var (
-	kubeBenchContainerImage = fmt.Sprintf("aquasec/kube-bench:%s", kubeBenchVersion)
-)
+type Config interface {
+	GetKubeBenchImageRef() string
+}
 
 type Scanner struct {
+	config    Config
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
 	converter Converter
 }
 
-func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(config Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
+		config:    config,
 		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
@@ -95,7 +97,7 @@ func (s *Scanner) Scan(ctx context.Context, node core.Node) (report starboard.CI
 	}()
 
 	// 5. Parse the CISBenchmarkReport from the logs Reader
-	report, err = s.converter.Convert(logsReader)
+	report, err = s.converter.Convert(s.config, logsReader)
 	if err != nil {
 		err = fmt.Errorf("parsing CIS benchmark report: %w", err)
 		return
@@ -112,7 +114,7 @@ func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      uuid.New().String(),
-			Namespace: kube.NamespaceStarboard,
+			Namespace: starboard2.NamespaceName,
 			Labels: labels.Set{
 				"app.kubernetes.io/name": "starboard-cli",
 				kube.LabelResourceKind:   string(kube.KindNode),
@@ -132,7 +134,7 @@ func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
 					},
 				},
 				Spec: core.PodSpec{
-					ServiceAccountName:           kube.ServiceAccountStarboard,
+					ServiceAccountName:           starboard2.ServiceAccountName,
 					AutomountServiceAccountToken: pointer.BoolPtr(true),
 					RestartPolicy:                core.RestartPolicyNever,
 					HostPID:                      true,
@@ -182,7 +184,7 @@ func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
 					Containers: []core.Container{
 						{
 							Name:                     kubeBenchContainerName,
-							Image:                    kubeBenchContainerImage,
+							Image:                    s.config.GetKubeBenchImageRef(),
 							ImagePullPolicy:          core.PullIfNotPresent,
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"kube-bench", target},

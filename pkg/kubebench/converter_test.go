@@ -3,6 +3,7 @@ package kubebench
 import (
 	"encoding/json"
 	"errors"
+	starboard2 "github.com/aquasecurity/starboard/pkg/starboard"
 	"os"
 	"testing"
 
@@ -12,6 +13,9 @@ import (
 )
 
 func TestConverter_Convert(t *testing.T) {
+	config := starboard2.ConfigData{
+		"kube-bench.imageRef": "aquasec/kube-bench:0.3.1",
+	}
 	var testcases = []struct {
 		name string
 		in   string // input File
@@ -46,7 +50,7 @@ func TestConverter_Convert(t *testing.T) {
 			}()
 
 			var r starboard.CISKubeBenchOutput
-			r, err = DefaultConverter.Convert(inFile)
+			r, err = DefaultConverter.Convert(config, inFile)
 
 			switch {
 			case tc.err == nil:

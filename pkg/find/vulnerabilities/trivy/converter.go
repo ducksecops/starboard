@@ -2,6 +2,7 @@ package trivy
 
 import (
 	"encoding/json"
+	starboard2 "github.com/aquasecurity/starboard/pkg/starboard"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -15,7 +16,7 @@ import (
 // Convert converts the vulnerabilities model used by Trivy
 // to a generic model defined by the Custom Security Resource Specification.
 type Converter interface {
-	Convert(imageRef string, reader io.Reader) (starboard.VulnerabilityScanResult, error)
+	Convert(config Config, imageRef string, reader io.Reader) (starboard.VulnerabilityScanResult, error)
 }
 
 type converter struct {
@@ -27,7 +28,7 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(imageRef string, reader io.Reader) (report starboard.VulnerabilityScanResult, err error) {
+func (c *converter) Convert(config Config, imageRef string, reader io.Reader) (report starboard.VulnerabilityScanResult, err error) {
 	var scanReports []ScanReport
 	skipReader, err := c.skippingNoisyOutputReader(reader)
 	if err != nil {
@@ -37,7 +38,7 @@ func (c *converter) Convert(imageRef string, reader io.Reader) (report starboard
 	if err != nil {
 		return
 	}
-	return c.convert(imageRef, scanReports)
+	return c.convert(config, imageRef, scanReports)
 }
 
 // TODO Normally I'd use Trivy with the --quiet flag, but in case of errors it does suppress the error message.
@@ -60,7 +61,7 @@ func (c *converter) skippingNoisyOutputReader(input io.Reader) (io.Reader, error
 	return strings.NewReader(inputAsString), nil
 }
 
-func (c *converter) convert(imageRef string, reports []ScanReport) (starboard.VulnerabilityScanResult, error) {
+func (c *converter) convert(config Config, imageRef string, reports []ScanReport) (starboard.VulnerabilityScanResult, error) {
 	vulnerabilities := make([]starboard.Vulnerability, 0)
 
 	for _, report := range reports {
@@ -83,11 +84,16 @@ func (c *converter) convert(imageRef string, reports []ScanReport) (starboard.Vu
 		return starboard.VulnerabilityScanResult{}, err
 	}
 
+	version, err := starboard2.GetVersionFromImageRef(config.GetTrivyImageRef())
+	if err != nil {
+		return starboard.VulnerabilityScanResult{}, err
+	}
+
 	return starboard.VulnerabilityScanResult{
 		Scanner: starboard.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",
-			Version: trivyVersion,
+			Version: version,
 		},
 		Registry:        registry,
 		Artifact:        artifact,

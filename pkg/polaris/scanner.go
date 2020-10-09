@@ -3,6 +3,7 @@ package polaris
 import (
 	"context"
 	"fmt"
+	starboard2 "github.com/aquasecurity/starboard/pkg/starboard"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -111,7 +112,7 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      uuid.New().String(),
-			Namespace: kube.NamespaceStarboard,
+			Namespace: starboard2.NamespaceName,
 			Labels: map[string]string{
 				kube.LabelResourceKind:      string(workload.Kind),
 				kube.LabelResourceName:      workload.Name,
@@ -131,7 +132,7 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 					},
 				},
 				Spec: core.PodSpec{
-					ServiceAccountName:           kube.ServiceAccountStarboard,
+					ServiceAccountName:           starboard2.ServiceAccountName,
 					AutomountServiceAccountToken: pointer.BoolPtr(true),
 					RestartPolicy:                core.RestartPolicyNever,
 					Volumes: []core.Volume{
@@ -140,7 +141,7 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 							VolumeSource: core.VolumeSource{
 								ConfigMap: &core.ConfigMapVolumeSource{
 									LocalObjectReference: core.LocalObjectReference{
-										Name: kube.ConfigMapStarboard,
+										Name: starboard2.ConfigMapName,
 									},
 								},
 							},

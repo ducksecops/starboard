@@ -3,6 +3,7 @@ package trivy_test
 import (
 	"errors"
 	"fmt"
+	starboard2 "github.com/aquasecurity/starboard/pkg/starboard"
 	"strings"
 	"testing"
 
@@ -49,7 +50,7 @@ var (
 		Scanner: starboard.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",
-			Version: "0.9.1",
+			Version: "0.11.0",
 		},
 		Registry: starboard.Registry{
 			Server: "index.docker.io",
@@ -93,6 +94,9 @@ var (
 )
 
 func TestConverter_Convert(t *testing.T) {
+	config := starboard2.ConfigData{
+		"trivy.imageRef": "aquasec/trivy:0.11.0",
+	}
 
 	testCases := []struct {
 		name           string
@@ -125,7 +129,7 @@ null`,
 				Scanner: starboard.Scanner{
 					Name:    "Trivy",
 					Vendor:  "Aqua Security",
-					Version: "0.9.1",
+					Version: "0.11.0",
 				},
 				Registry: starboard.Registry{
 					Server: "core.harbor.domain",
@@ -155,7 +159,7 @@ null`,
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			report, err := trivy.NewConverter().Convert(tc.imageRef, strings.NewReader(tc.input))
+			report, err := trivy.NewConverter().Convert(config, tc.imageRef, strings.NewReader(tc.input))
 			switch {
 			case tc.expectedError == nil:
 				require.NoError(t, err)

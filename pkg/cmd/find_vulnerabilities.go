@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd"
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
@@ -62,23 +63,27 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			config, err := cf.ToRESTConfig()
+			kubernetesConfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return
 			}
-			kubernetesClientset, err := kubernetes.NewForConfig(config)
+			kubernetesClientset, err := kubernetes.NewForConfig(kubernetesConfig)
 			if err != nil {
 				return err
+			}
+			config, err := starboard.NewConfigReader(kubernetesClientset).Read(ctx)
+			if err != nil {
+				return
 			}
 			opts, err := getScannerOpts(cmd)
 			if err != nil {
 				return
 			}
-			reports, owner, err := trivy.NewScanner(opts, kubernetesClientset).Scan(ctx, workload)
+			reports, owner, err := trivy.NewScanner(config, opts, kubernetesClientset).Scan(ctx, workload)
 			if err != nil {
 				return
 			}
-			starboardClientset, err := starboardapi.NewForConfig(config)
+			starboardClientset, err := starboardapi.NewForConfig(kubernetesConfig)
 			if err != nil {
 				return
 			}

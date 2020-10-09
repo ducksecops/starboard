@@ -232,7 +232,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.11.0",
 							}),
 						}),
 					}),
@@ -297,7 +297,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.11.0",
 							}),
 						}),
 					}),
@@ -320,7 +320,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.11.0",
 							}),
 						}),
 					}),
@@ -403,7 +403,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.11.0",
 							}),
 						}),
 					}),
@@ -498,7 +498,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.11.0",
 							}),
 						}),
 					}),
@@ -589,7 +589,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.11.0",
 							}),
 						}),
 					}),
@@ -680,7 +680,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.11.0",
 							}),
 						}),
 					}),
@@ -841,7 +841,7 @@ var _ = Describe("Starboard CLI", func() {
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
 				"kube-bench",
-				"-v", starboardCLILogLevel, "--namespace", namespaceItest,
+				"-v", starboardCLILogLevel,
 			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -868,6 +868,13 @@ var _ = Describe("Starboard CLI", func() {
 							UID:        node.UID,
 						}),
 					}),
+					"Report": MatchFields(IgnoreExtras, Fields{
+						"Scanner": Equal(v1alpha1.Scanner{
+							Name:    "kube-bench",
+							Vendor:  "Aqua Security",
+							Version: "0.4.0",
+						}),
+					}),
 				}))
 			}
 		})
@@ -879,7 +886,7 @@ var _ = Describe("Starboard CLI", func() {
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
 				"kube-hunter",
-				"-v", starboardCLILogLevel, "--namespace", namespaceItest,
+				"-v", starboardCLILogLevel,
 			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 
